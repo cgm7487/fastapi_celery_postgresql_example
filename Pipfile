@@ -7,6 +7,9 @@ verify_ssl = true
 
 [packages]
 fastapi = "*"
+celery = "*"
+flower = "*"
+uvicorn = "*"
 
 [requires]
 python_version = "3.8"
