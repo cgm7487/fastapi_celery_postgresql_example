@@ -1,0 +1,1 @@
+# fastapi_celery_postgresql_example
