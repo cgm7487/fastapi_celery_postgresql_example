@@ -7,7 +7,6 @@ ENV PYTHONUNBUFFERED 1
 
 COPY . .
 
-RUN apt install -qy pipenv
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip && pip install pipenv
 RUN pipenv lock -r > requirements.txt
 RUN pip install -r requirements.txt

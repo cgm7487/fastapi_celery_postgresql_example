@@ -20,7 +20,7 @@ services:
         volumes:
             - ./app:/usr/src/app
         depends_on:
-            - web
+            - app
             - redis
     redis:
         image: redis:6-alpine
