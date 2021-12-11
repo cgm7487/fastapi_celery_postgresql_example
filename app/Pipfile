@@ -10,6 +10,7 @@ fastapi = "*"
 celery = "*"
 flower = "*"
 uvicorn = "*"
+redis = "*"
 
 [requires]
 python_version = "3.8"
