@@ -2,41 +2,65 @@ version: '3.8'
 
 services:
 
-    app:
-        build: ./app
-        ports:
-            - 8000:8000
-        command: uvicorn app:app --host=0.0.0.0 --reload
-        volumes:
-            - ./app:/usr/src/app
-        environment:
-            - CELERY_BROKER_URL=redis://redis:6379/0
-            - CELERY_RESULT_BACKEND=redis://redis:6379/0
-        depends_on:
-            - redis
-    worker:
-        build: ./app
-        command: celery --app worker.celery worker --loglevel=info --logfile=logs/celery.log
-        volumes:
-            - ./app:/usr/src/app
-        environment:
-            - CELERY_BROKER_URL=redis://redis:6379/0
-            - CELERY_RESULT_BACKEND=redis://redis:6379/0
-        depends_on:
-            - app
-            - redis
-    redis:
-        image: redis:6-alpine
+  a_service:
+    build: ./app
+    ports:
+      - 15566:15566
+    #networks:
+    #  - mgmt_network
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 15566 --reload
+    volumes:
+      - ./app:/usr/src/app
+    env_file:
+      - ./app/.env
+    depends_on:
+      - redis
+      - db
+  worker:
+    build: ./app
+    #networks:
+    #  - mgmt_network
+    command: poetry run celery --app worker.celery worker --loglevel=info --logfile=logs/celery.log
+    volumes:
+      - ./app:/usr/src/app
+    env_file:
+      - ./app/.env
+    depends_on:
+      - a_service
+      - redis
 
-    flower:
-        build: ./app
-        command: celery  --app worker.celery flower --port=5555 --broker=redis://redis:6379/0
-        ports:
-            - 5556:5555
-        environment:
-            - CELERY_BROKER_URL=redis://redis:6379/0
-            - CELERY_RESULT_BACKEND=redis://redis:6379/0
-        depends_on:
-            - app
-            - redis
-            - worker
+  redis:
+    image: redis:6-alpine
+    #networks:
+    #  - mgmt_network
+
+  dashboard:
+    build: ./app
+    command: poetry run celery flower --app=worker.celery --port=5555 --broker=redis://redis:6379/0
+    #networks:
+    #  - mgmt_network
+    ports:
+      - 5556:5555
+    env_file:
+      - ./app/.env
+    depends_on:
+      - a_service
+      - redis
+      - worker
+
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./app/.env
+    expose:
+      - 5432
+    
+volumes:
+  postgres_data:
+
+#networks:
+#  mgmt_network:
+#    driver: bridge
+#    name: mgmt_network
